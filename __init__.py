@@ -1,23 +1,73 @@
 from kivy.clock import Clock
-from kivy.properties import OptionProperty, ObjectProperty, NumericProperty,\
-    ReferenceListProperty, BooleanProperty, ListProperty, AliasProperty
+from kivy.properties import OptionProperty, ObjectProperty, NumericProperty, \
+    ReferenceListProperty, BooleanProperty, ListProperty, AliasProperty, \
+    StringProperty
 from kivy.config import Config
 from kivy.metrics import sp
 from functools import partial
-
+from kivy.animation import Animation
 
 _scroll_timeout = _scroll_distance = 0
 if Config:
     _scroll_timeout = Config.getint('widgets', 'scroll_timeout')
     _scroll_distance = Config.getint('widgets', 'scroll_distance')
 
+
 class SwipeBehavior(object):
     '''Swipe behavior. When combined with a widget, swiping in the rectangle
     defined by :attr:`swipe_rectangle` will swipe the widget.
     In this case to left or to right.
-    The main.py file demonstrates the use.
+    The example.py file demonstrates the use.
     '''
-    
+
+    move_to = ListProperty()
+    '''To move widget.
+    :attr:`remove_from_left` is a :class:`~kivy.properties.ListProperty`,
+    defaults to [None,None].
+    '''
+
+    remove_from_left = BooleanProperty(True)
+    '''Choice to remove the widget from the left or not.
+    :attr:`remove_from_left` is a :class:`~kivy.properties.BooleanProperty`,
+    defaults to True.
+    '''
+
+    remove_from_right = BooleanProperty(True)
+    '''Choice to remove the widget from the right or not.
+    :attr:`remove_from_right` is a :class:`~kivy.properties.BooleanProperty`,
+    defaults to True.
+    '''
+
+    opacity_reduction_rate = NumericProperty(.005)
+    '''Change the rate at which opacity reduces.
+    :attr:`opacity_reduction_rate` is a :class:
+    `~kivy.properties.NumericProperty`, defaults to (.005).
+    '''
+
+    animation_type = StringProperty('linear')
+    '''For setting animation type.
+    :attr:`animation_type` is a :class:`~kivy.properties.StringProperty`,
+    defaults to linear.
+    '''
+
+    animation_duration = NumericProperty(.5)
+    '''For setting animation duration.
+    :attr:`animation_duration` is a :class:`~kivy.properties.NumericProperty`,
+    defaults to (.5).
+    '''
+
+    right_percentage = NumericProperty(35)
+    '''When to delete from right side.
+    :attr:`right_percentage` is a :class:`~kivy.properties.NumericProperty`,
+    defaults to 35.
+    '''
+
+    left_percentage = NumericProperty(35)
+    '''When to delete from left side.
+    :attr:`left_percentage` is a :class:`~kivy.properties.NumericProperty`,
+    defaults to 35.
+    '''
+
     swipe_distance = NumericProperty(_scroll_distance)
     '''Distance to move before swiping the :class:`swipeBehavior`, in pixels.
     As soon as the distance has been traveled, the :class:`swipeBehavior` will
@@ -69,7 +119,7 @@ class SwipeBehavior(object):
     '''
 
     swipe_rectangle = ReferenceListProperty(swipe_rect_x, swipe_rect_y,
-                                           swipe_rect_width, swipe_rect_height)
+                                        swipe_rect_width, swipe_rect_height)
     '''Position and size of the axis aligned bounding rectangle where swiping
     is allowed.
 
@@ -85,9 +135,21 @@ class SwipeBehavior(object):
     def _get_uid(self, prefix='sv'):
         return '{0}.{1}'.format(prefix, self.uid)
 
+    def animate_back(self):
+        '''Take the widget back to its original position by using animation.
+        '''
+        if not self.move_to==[]:
+            anim1 = Animation(x=self.move_to[0], y=self.move_to[1],
+                              t=self.animation_type,
+                              duration=self.animation_duration)
+            anim1.start(self)
+        else:
+            pass
+
     def on_touch_down(self, touch):
         xx, yy, w, h = self.swipe_rectangle
         x, y = touch.pos
+
         if not self.collide_point(x, y):
             touch.ud[self._get_uid('svavoid')] = True
             return super(SwipeBehavior, self).on_touch_down(touch)
@@ -167,3 +229,43 @@ class SwipeBehavior(object):
         self._swipe_touch = None
         super(SwipeBehavior, self).on_touch_down(touch)
         return
+
+    def check_for_left(self):
+        '''
+        Delete the widget when on_touch_up method is called and the widget is
+        left_percentage from the left.
+        '''
+        if hasattr(self.parent, 'width'):
+            if (((self.x+self.width) - self.parent.x) / self.width
+                            ) * 100 <= self.left_percentage:
+                if self.remove_from_left:
+                    self.parent.remove_widget(self)
+            else:
+                self.get_widget_back()
+                self.animate_back()
+        else:
+            pass
+
+    def check_for_right(self):
+        '''
+        Delete the widget when on_touch_up method is called and the widget is
+        right_percentage from the right.
+        '''
+        if hasattr(self.parent, 'width'):
+            if ((self.parent.width - self.x) / self.width
+                        ) * 100 <= self.right_percentage:
+                if self.remove_from_right:
+                    self.parent.remove_widget(self)
+            else:
+                self.get_widget_back()
+                self.animate_back()
+        else:
+            pass
+    '''
+    get the opacity of widget back
+    '''
+    def reduce_opacity(self):
+        self.opacity -= self.opacity_reduction_rate
+
+    def get_widget_back(self):
+        self.opacity = 1.0
