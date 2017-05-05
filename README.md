@@ -3,7 +3,7 @@ Swipe To Delete
 
 ![ScreenShot](https://raw.github.com/kiok46/swipetodelete/master/screenshot.png)
 
-##Usage Summary
+## Usage Summary
 
 This project is an implementation of Swipe Behavior. 
 SwipeToDelete widget is built on Swipe Behaviour as a test case.
@@ -12,7 +12,7 @@ Swipe behavior, when combined with a widget allows swiping within a rectangular 
 
 Latest commit adds some new features.
 
-##How It Works
+## How It Works
 
 
 Import in your python file or kivy file
@@ -30,7 +30,7 @@ Use in your kivy file or python file
 
 See example.py file for more.
 
-##SwipeBehaviour Properties
+## SwipeBehaviour Properties
 
 - *swipe_distance* - Distance to move before swiping. NumericProperty(20)
 - *swipe_timeout* - Timeout allowed to trigger swipe_distance in milliseconds. NumericProperty(55)
@@ -52,7 +52,7 @@ See example.py file for more.
 - *opacity_reduction_rate* - Change the way at which opacity reduces.
 
 
-##Want to contribute or need to see some improvements?
+## Want to contribute or need to see some improvements?
 I would love that, please create an issue or send a PR.
 
 
